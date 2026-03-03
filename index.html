@@ -15,19 +15,19 @@
   .sentence-card.correct { border-left-color: #00e676; background: #0d2b1a; }
   .sentence-card.incorrect { border-left-color: #ff4f4f; background: #2b0d0d; }
 
-  .card-num { font-size: 0.78rem; font-weight: 700; color: #6e7aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .card-num { font-size: 0.78rem; font-weight: 700; color: #6e7aaa; text-transform: uppercase; letter-spacing: 1px; }
+
+  .card-reset-btn { background: none; border: 1px solid #3a3f60; border-radius: 14px; color: #6e7aaa; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+  .card-reset-btn:hover { background: #2a2e45; color: #a8b4ff; border-color: #a8b4ff; transform: none; }
 
   .word-bank { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 
-  /* Bank chips – white text on dark teal */
   .word-chip { background: #1e3a5f; border: 2px solid #4a7ab5; border-radius: 20px; padding: 6px 16px; font-size: 0.95rem; color: #d0e8ff; cursor: pointer; user-select: none; font-weight: 600; transition: background 0.15s, transform 0.1s; }
   .word-chip:hover { background: #2a4f80; transform: translateY(-2px); }
   .word-chip.used { opacity: 0.22; pointer-events: none; }
 
-  /* Answer area */
   .answer-area { min-height: 46px; border: 2px dashed #3a4470; border-radius: 8px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: #13162080; }
-
-  /* Placed chips – bright yellow on dark for max contrast */
   .answer-area .word-chip { background: #e8c000; color: #111; border-color: #f0d000; font-weight: 700; }
   .answer-area .word-chip:hover { background: #ff4f4f; border-color: #ff4f4f; color: #fff; transform: none; }
 
@@ -53,7 +53,6 @@
   @keyframes fadeIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
   #interviewPanel h2 { color: #00e676; font-size: 1.3rem; margin-bottom: 6px; }
   #interviewPanel .unlock-sub { color: #7abf99; font-size: 0.9rem; margin-bottom: 20px; }
-
   .interview-q { padding: 12px 0; border-bottom: 1px solid #1a3d28; font-size: 1rem; line-height: 1.6; color: #d0f0e0; }
   .interview-q:last-child { border-bottom: none; }
   .interview-q strong { color: #a0ffcc; }
@@ -72,7 +71,7 @@
 
 <div class="btn-row">
   <button id="checkBtn" onclick="checkAll()">✔ Check Answers</button>
-  <button id="resetBtn" onclick="resetAll()">↺ Reset</button>
+  <button id="resetBtn" onclick="resetAll()">↺ Reset All</button>
 </div>
 
 <div class="score-bar">Score: <span id="scoreDisplay">0 / 7</span></div>
@@ -125,7 +124,16 @@ function render() {
     const card = document.createElement('div');
     card.className = 'sentence-card';
     card.id = 'card-' + idx;
-    card.innerHTML = '<div class="card-num">Question ' + (idx+1) + '</div><div class="word-bank" id="bank-'+idx+'"></div><div class="answer-area" id="answer-'+idx+'"></div><div class="feedback" id="fb-'+idx+'"></div>';
+
+    card.innerHTML =
+      '<div class="card-header">' +
+        '<div class="card-num">Question ' + (idx+1) + '</div>' +
+        '<button class="card-reset-btn" onclick="resetCard(' + idx + ')">↺ Reset</button>' +
+      '</div>' +
+      '<div class="word-bank" id="bank-'+idx+'"></div>' +
+      '<div class="answer-area" id="answer-'+idx+'"></div>' +
+      '<div class="feedback" id="fb-'+idx+'"></div>';
+
     area.appendChild(card);
 
     const bank = document.getElementById('bank-'+idx);
@@ -169,7 +177,26 @@ function removeWord(sIdx, aIdx) {
   render();
 }
 
+function resetCard(idx) {
+  state[idx].scrambled = shuffle(sentences[idx].correct);
+  state[idx].answer = [];
+  document.getElementById('fb-'+idx).textContent = '';
+  document.getElementById('card-'+idx).className = 'sentence-card';
+  render();
+  updateScore();
+}
+
 function norm(arr) { return arr.join(' ').toLowerCase().trim(); }
+
+function updateScore() {
+  let score = 0;
+  sentences.forEach((s, idx) => {
+    const userWords = state[idx].answer.map(a => a.word);
+    if (norm(userWords) === norm(state[idx].correct)) score++;
+  });
+  document.getElementById('scoreDisplay').textContent = score + ' / 7';
+  return score;
+}
 
 function checkAll() {
   let score = 0;
