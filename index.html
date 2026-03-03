@@ -186,13 +186,27 @@ function resetCard(idx) {
   updateScore();
 }
 
+// Alternate accepted answers (index matches sentences array)
+const alternates = {
+  0: [["Have","you","recently","read","any","good","books?"]]
+};
+
 function norm(arr) { return arr.join(' ').toLowerCase().trim(); }
+
+function isCorrect(idx, userWords) {
+  const st = state[idx];
+  if (norm(userWords) === norm(st.correct)) return true;
+  if (alternates[idx]) {
+    return alternates[idx].some(alt => norm(userWords) === norm(alt));
+  }
+  return false;
+}
 
 function updateScore() {
   let score = 0;
   sentences.forEach((s, idx) => {
     const userWords = state[idx].answer.map(a => a.word);
-    if (norm(userWords) === norm(state[idx].correct)) score++;
+    if (isCorrect(idx, userWords)) score++;
   });
   document.getElementById('scoreDisplay').textContent = score + ' / 7';
   return score;
@@ -206,7 +220,7 @@ function checkAll() {
     const fb = document.getElementById('fb-'+idx);
     const card = document.getElementById('card-'+idx);
     if (userWords.length === 0) { fb.textContent = '⚠ Please arrange the words first.'; fb.className = 'feedback err'; card.className = 'sentence-card'; return; }
-    if (norm(userWords) === norm(st.correct)) { fb.textContent = '✓ Correct!'; fb.className = 'feedback ok'; card.className = 'sentence-card correct'; score++; }
+    if (isCorrect(idx, userWords)) { fb.textContent = '✓ Correct!'; fb.className = 'feedback ok'; card.className = 'sentence-card correct'; score++; }
     else { fb.textContent = '✗ Not quite – try again!'; fb.className = 'feedback err'; card.className = 'sentence-card incorrect'; }
   });
   document.getElementById('scoreDisplay').textContent = score + ' / 7';
