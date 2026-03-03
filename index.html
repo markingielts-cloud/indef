@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Books – Unscramble the Questions</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f1117; min-height: 100vh; padding: 30px 16px; color: #e8eaf0; }
+  h1 { text-align: center; font-size: 1.6rem; color: #a8b4ff; margin-bottom: 6px; }
+  .subtitle { text-align: center; font-size: 0.95rem; color: #9099b8; margin-bottom: 28px; }
+  .exercise-wrapper { max-width: 820px; margin: 0 auto; }
+
+  .sentence-card { background: #1c1f2e; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.4); border-left: 5px solid #3a3f60; transition: border-color 0.3s, background 0.3s; }
+  .sentence-card.correct { border-left-color: #00e676; background: #0d2b1a; }
+  .sentence-card.incorrect { border-left-color: #ff4f4f; background: #2b0d0d; }
+
+  .card-num { font-size: 0.78rem; font-weight: 700; color: #6e7aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+  .word-bank { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+
+  /* Bank chips – white text on dark teal */
+  .word-chip { background: #1e3a5f; border: 2px solid #4a7ab5; border-radius: 20px; padding: 6px 16px; font-size: 0.95rem; color: #d0e8ff; cursor: pointer; user-select: none; font-weight: 600; transition: background 0.15s, transform 0.1s; }
+  .word-chip:hover { background: #2a4f80; transform: translateY(-2px); }
+  .word-chip.used { opacity: 0.22; pointer-events: none; }
+
+  /* Answer area */
+  .answer-area { min-height: 46px; border: 2px dashed #3a4470; border-radius: 8px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: #13162080; }
+
+  /* Placed chips – bright yellow on dark for max contrast */
+  .answer-area .word-chip { background: #e8c000; color: #111; border-color: #f0d000; font-weight: 700; }
+  .answer-area .word-chip:hover { background: #ff4f4f; border-color: #ff4f4f; color: #fff; transform: none; }
+
+  .placeholder-text { color: #4a5070; font-size: 0.88rem; font-style: italic; }
+
+  .feedback { margin-top: 8px; font-size: 0.9rem; font-weight: 700; min-height: 20px; }
+  .feedback.ok { color: #00e676; }
+  .feedback.err { color: #ff6b6b; }
+
+  .btn-row { display: flex; gap: 12px; justify-content: center; margin: 28px 0 16px; flex-wrap: wrap; }
+  button { padding: 12px 28px; border: none; border-radius: 25px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+  button:active { transform: scale(0.97); }
+  #checkBtn { background: #a8b4ff; color: #0f1117; }
+  #checkBtn:hover { background: #c0caff; }
+  #resetBtn { background: #2a2e45; color: #a8b4ff; border: 2px solid #3a3f60; }
+  #resetBtn:hover { background: #333860; }
+
+  #lockedPanel { max-width: 820px; margin: 0 auto 30px; background: #1c1f2e; border-radius: 14px; padding: 26px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.4); text-align: center; border: 3px dashed #3a3f60; }
+  #lockedPanel .lock-icon { font-size: 3rem; margin-bottom: 10px; }
+  #lockedPanel p { color: #9099b8; font-size: 0.97rem; }
+
+  #interviewPanel { display: none; max-width: 820px; margin: 0 auto 40px; background: #0d2b1a; border-radius: 14px; padding: 28px 30px; box-shadow: 0 4px 18px rgba(0,0,0,0.5); border: 3px solid #00e676; animation: fadeIn 0.6s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+  #interviewPanel h2 { color: #00e676; font-size: 1.3rem; margin-bottom: 6px; }
+  #interviewPanel .unlock-sub { color: #7abf99; font-size: 0.9rem; margin-bottom: 20px; }
+
+  .interview-q { padding: 12px 0; border-bottom: 1px solid #1a3d28; font-size: 1rem; line-height: 1.6; color: #d0f0e0; }
+  .interview-q:last-child { border-bottom: none; }
+  .interview-q strong { color: #a0ffcc; }
+  .follow-up { font-size: 0.85rem; color: #5a9e78; margin-top: 4px; font-style: italic; }
+
+  .score-bar { text-align: center; font-size: 1rem; color: #9099b8; margin-bottom: 10px; }
+  #scoreDisplay { font-weight: 700; color: #a8b4ff; }
+</style>
+</head>
+<body>
+
+<h1>📚 Books &amp; Reading</h1>
+<p class="subtitle">Unscramble each question by clicking the words in the correct order.<br>Get all 7 right to unlock the <strong>Interview Activity</strong>!</p>
+
+<div class="exercise-wrapper" id="exerciseArea"></div>
+
+<div class="btn-row">
+  <button id="checkBtn" onclick="checkAll()">✔ Check Answers</button>
+  <button id="resetBtn" onclick="resetAll()">↺ Reset</button>
+</div>
+
+<div class="score-bar">Score: <span id="scoreDisplay">0 / 7</span></div>
+
+<div id="lockedPanel">
+  <div class="lock-icon">🔒</div>
+  <p>Answer all 7 questions correctly to unlock the <strong>Interview Activity</strong>!</p>
+</div>
+
+<div id="interviewPanel">
+  <h2>🔓 Interview Activity – Unlocked!</h2>
+  <p class="unlock-sub">Interview your partner using these questions and ask follow-up questions:</p>
+  <div class="interview-q"><strong>1. Have you read any good books recently?</strong><div class="follow-up">→ What was it about? Would you recommend it?</div></div>
+  <div class="interview-q"><strong>2. Have you already chosen your next book?</strong><div class="follow-up">→ What made you choose it? Where did you hear about it?</div></div>
+  <div class="interview-q"><strong>3. Have you just finished reading a book?</strong><div class="follow-up">→ How did it end? Were you satisfied with the ending?</div></div>
+  <div class="interview-q"><strong>4. Did you ever start a book years ago and still haven't finished it?</strong><div class="follow-up">→ Why did you stop? Do you think you'll ever finish it?</div></div>
+  <div class="interview-q"><strong>5. Have you ever read the ending of a book before finishing it?</strong><div class="follow-up">→ Why did you do that? Did it ruin the book for you?</div></div>
+  <div class="interview-q"><strong>6. Have you bought a book and never read it?</strong><div class="follow-up">→ Why haven't you read it? Do you still plan to?</div></div>
+  <div class="interview-q"><strong>7. Have you finished the book you're reading yet?</strong><div class="follow-up">→ How much is left? Are you enjoying it?</div></div>
+</div>
+
+<script>
+const sentences = [
+  { correct: ["Have","you","read","any","good","books","recently?"] },
+  { correct: ["Have","you","already","chosen","your","next","book?"] },
+  { correct: ["Have","you","just","finished","reading","a","book?"] },
+  { correct: ["Did","you","ever","start","a","book","years","ago","and","still","haven't","finished","it?"] },
+  { correct: ["Have","you","ever","read","the","ending","of","a","book","before","finishing","it?"] },
+  { correct: ["Have","you","bought","a","book","and","never","read","it?"] },
+  { correct: ["Have","you","finished","the","book","you're","reading","yet?"] }
+];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  if (a.join(' ') === arr.join(' ')) return shuffle(arr);
+  return a;
+}
+
+const state = sentences.map(s => ({ scrambled: shuffle(s.correct), answer: [], correct: s.correct }));
+
+function render() {
+  const area = document.getElementById('exerciseArea');
+  area.innerHTML = '';
+  sentences.forEach((s, idx) => {
+    const st = state[idx];
+    const card = document.createElement('div');
+    card.className = 'sentence-card';
+    card.id = 'card-' + idx;
+    card.innerHTML = '<div class="card-num">Question ' + (idx+1) + '</div><div class="word-bank" id="bank-'+idx+'"></div><div class="answer-area" id="answer-'+idx+'"></div><div class="feedback" id="fb-'+idx+'"></div>';
+    area.appendChild(card);
+
+    const bank = document.getElementById('bank-'+idx);
+    st.scrambled.forEach((word, wi) => {
+      const chip = document.createElement('span');
+      const isUsed = st.answer.some(a => a.srcIdx === wi);
+      chip.className = 'word-chip' + (isUsed ? ' used' : '');
+      chip.textContent = word;
+      chip.onclick = () => addWord(idx, wi, word);
+      bank.appendChild(chip);
+    });
+
+    const ans = document.getElementById('answer-'+idx);
+    if (st.answer.length === 0) {
+      ans.innerHTML = '<span class="placeholder-text">Click words above to build the question…</span>';
+    } else {
+      st.answer.forEach((a, ai) => {
+        const chip = document.createElement('span');
+        chip.className = 'word-chip';
+        chip.textContent = a.word;
+        chip.title = 'Click to remove';
+        chip.onclick = () => removeWord(idx, ai);
+        ans.appendChild(chip);
+      });
+    }
+  });
+}
+
+function addWord(sIdx, wIdx, word) {
+  if (state[sIdx].answer.some(a => a.srcIdx === wIdx)) return;
+  state[sIdx].answer.push({ srcIdx: wIdx, word });
+  document.getElementById('fb-'+sIdx).textContent = '';
+  document.getElementById('card-'+sIdx).className = 'sentence-card';
+  render();
+}
+
+function removeWord(sIdx, aIdx) {
+  state[sIdx].answer.splice(aIdx, 1);
+  document.getElementById('fb-'+sIdx).textContent = '';
+  document.getElementById('card-'+sIdx).className = 'sentence-card';
+  render();
+}
+
+function norm(arr) { return arr.join(' ').toLowerCase().trim(); }
+
+function checkAll() {
+  let score = 0;
+  sentences.forEach((s, idx) => {
+    const st = state[idx];
+    const userWords = st.answer.map(a => a.word);
+    const fb = document.getElementById('fb-'+idx);
+    const card = document.getElementById('card-'+idx);
+    if (userWords.length === 0) { fb.textContent = '⚠ Please arrange the words first.'; fb.className = 'feedback err'; card.className = 'sentence-card'; return; }
+    if (norm(userWords) === norm(st.correct)) { fb.textContent = '✓ Correct!'; fb.className = 'feedback ok'; card.className = 'sentence-card correct'; score++; }
+    else { fb.textContent = '✗ Not quite – try again!'; fb.className = 'feedback err'; card.className = 'sentence-card incorrect'; }
+  });
+  document.getElementById('scoreDisplay').textContent = score + ' / 7';
+  if (score === 7) {
+    document.getElementById('lockedPanel').style.display = 'none';
+    document.getElementById('interviewPanel').style.display = 'block';
+    setTimeout(() => document.getElementById('interviewPanel').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  } else {
+    document.getElementById('lockedPanel').style.display = 'block';
+    document.getElementById('interviewPanel').style.display = 'none';
+  }
+}
+
+function resetAll() {
+  sentences.forEach((s, idx) => { state[idx].scrambled = shuffle(s.correct); state[idx].answer = []; });
+  document.getElementById('scoreDisplay').textContent = '0 / 7';
+  document.getElementById('lockedPanel').style.display = 'block';
+  document.getElementById('interviewPanel').style.display = 'none';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
